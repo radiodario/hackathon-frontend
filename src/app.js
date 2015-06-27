@@ -1,3 +1,6 @@
+VIZI.BlueprintInputPointCloud = require('./BlueprintInputPointCloud');
+VIZI.BlueprintOutputPointCloud = require('./BlueprintOutputPointCloud');
+
 var CENTER = [51.5219363, -0.0846016];
 
 var worldOptions = {
