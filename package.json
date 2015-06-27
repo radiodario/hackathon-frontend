@@ -18,7 +18,8 @@
     "url": "git://github.com/radiodario/hackthon-frontend.git"
   },
   "dependencies": {
-    "firebase": "^2.2.7"
+    "firebase": "^2.2.7",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
