@@ -13,9 +13,7 @@ var BlueprintInputPointCloud = function(options) {
         {name : "cloudReceived", arguments: ["cloud"] }
     ];
 
-    self.actions = [
-
-    ]
+    self.actions = [];
 
 }
 

@@ -12,37 +12,7 @@ module.exports = {
         zoom: 20,
         tilesPerDirection: 5,
         cullZoom: 10
-      }
-      /*, {
-        zoom: 19,
-        tilesPerDirection: 3,
-        cullZoom: 17
-      }, {
-        zoom: 18,
-        tilesPerDirection: 3,
-        cullZoom: 16
-      }, {
-        zoom: 17,
-        tilesPerDirection: 3,
-        cullZoom: 15
-      }, {
-        zoom: 16,
-        tilesPerDirection: 3,
-        cullZoom: 14
-      }, {
-        zoom: 15,
-        tilesPerDirection: 3,
-        cullZoom: 13
-      }, {
-        zoom: 14,
-        tilesPerDirection: 3,
-        cullZoom: 12
-      }, {
-        zoom: 13,
-        tilesPerDirection: 5,
-        cullZoom: 11
-      }*/
-      ]
+      }]
     }
   },
   triggers: [{
