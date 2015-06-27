@@ -1,0 +1,7 @@
+{
+  "name": "hackthon-frontend",
+  "version": "0.0.0",
+  "dependencies": {
+    "vizicities": "git@github.com:vizicities/vizicities.git#0.2.0"
+  }
+}
