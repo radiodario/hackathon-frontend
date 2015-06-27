@@ -1,5 +1,8 @@
 VIZI.BlueprintInputPointCloud = require('./BlueprintInputPointCloud');
 VIZI.BlueprintOutputPointCloud = require('./BlueprintOutputPointCloud');
+VIZI.BlueprintInputPlayer = require('./BlueprintInputPlayer');
+VIZI.BlueprintOutputPlayer = require('./BlueprintOutputPlayer');
+
 
 var CENTER = [51.5219363, -0.0846016];
 
@@ -12,7 +15,7 @@ var worldOptions = {
 
 var world = new VIZI.World(worldOptions);
 
-var controls = new VIZI.ControlsOrbit(world.camera, {
+var controls = new VIZI.ControlsMap(world.camera, {
     viewport: world.options.viewport
 });
 
@@ -27,6 +30,10 @@ switchboardBuildings.addToWorld(world);
 var pointCloudConfig = require('./pointCloudConfig');
 var switchboardPointClouds = new VIZI.BlueprintSwitchboard(pointCloudConfig);
 switchboardPointClouds.addToWorld(world);
+
+var playerConfig = require('./playerConfig');
+var switchboardPlayer = new VIZI.BlueprintSwitchboard(playerConfig);
+switchboardPlayer.addToWorld(world);
 
 var clock = new VIZI.Clock();
 
