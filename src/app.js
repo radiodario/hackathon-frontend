@@ -24,7 +24,9 @@ var buildingConfig = require('./buildingsConfig');
 var switchboardBuildings = new VIZI.BlueprintSwitchboard(buildingConfig);
 switchboardBuildings.addToWorld(world);
 
-
+var pointCloudConfig = require('./pointCloudConfig');
+var switchboardPointClouds = new VIZI.BlueprintSwitchboard(pointCloudConfig);
+switchboardPointClouds.addToWorld(world);
 
 var clock = new VIZI.Clock();
 

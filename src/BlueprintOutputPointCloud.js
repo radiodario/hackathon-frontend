@@ -38,3 +38,20 @@ BlueprintOutputPointCloud.prototype.init = function() {
 
 
 }
+
+BlueprintOutputPointCloud.prototype.outputCloud = function(cloud) {
+    var self = this;
+
+    var coords = cloud.coordinates;
+
+
+}
+
+
+BlueprintOutputPointCloud.prototype.onAdd = function(world) {
+  var self = this;
+  self.world = world;
+  self.init();
+};
+
+module.exports = BlueprintOutputPointCloud;
