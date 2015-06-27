@@ -5,10 +5,29 @@
   <title>hackthon-frontend</title>
   <link rel="stylesheet" href="bower_components/vizicities/build/vizi.css">
   <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
+<header>
+	<div id="team-left" class="header">
+		Team Pink
+		<br/>
+		<span id="left-score">(SCORE)</span>
+	</div>	
+	<div id="team-right" class="header">
+	Team Blue:
+	<br/>
+	<span id="right-score">(SCORE)</score>
+	</div>
+	<div id="timer">
+		00:00
+	</div>
 
+</header>
 <div id="map-viewport"></div>
+<footer>
+	<img src="img/splatmap-logo-with-text-transparent.png" alt="splatmap logo" id="logo">
+</footer>
 <script id="live-reload" src="http://localhost:35729/livereload.js"></script>
 <script src="bower_components/vizicities/build/vizi.js"></script>
 <script src="app.js"></script>
