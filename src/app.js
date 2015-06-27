@@ -12,7 +12,7 @@ var worldOptions = {
 
 var world = new VIZI.World(worldOptions);
 
-var controls = new VIZI.ControlsMap(world.camera, {
+var controls = new VIZI.ControlsOrbit(world.camera, {
     viewport: world.options.viewport
 });
 
@@ -35,8 +35,6 @@ var update = function() {
 
   world.onTick(delta);
   world.render();
-
-
 
   window.requestAnimationFrame(update);
 };

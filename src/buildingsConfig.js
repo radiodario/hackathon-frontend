@@ -9,9 +9,9 @@ module.exports = {
     type: "BlueprintOutputBuildingTiles",
     options: {
       grids: [{
-        zoom: 19,
-        tilesPerDirection: 1,
-        cullZoom: 10
+        zoom: 18,
+        tilesPerDirection: 3,
+        cullZoom: 1
       }],
       workerURL: "/bower_components/vizicities/build/vizi-worker.min.js"
     }
