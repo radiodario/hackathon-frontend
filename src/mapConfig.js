@@ -10,9 +10,10 @@ module.exports = {
     options: {
       grids: [{
         zoom: 20,
-        tilesPerDirection: 3,
-        cullZoom: 18
-      }, {
+        tilesPerDirection: 5,
+        cullZoom: 10
+      }
+      /*, {
         zoom: 19,
         tilesPerDirection: 3,
         cullZoom: 17
@@ -40,7 +41,8 @@ module.exports = {
         zoom: 13,
         tilesPerDirection: 5,
         cullZoom: 11
-      }]
+      }*/
+      ]
     }
   },
   triggers: [{
