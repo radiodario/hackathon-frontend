@@ -2113,7 +2113,7 @@ BlueprintOutputPointCloud.prototype.outputCloud = function(cloud) {
     var height = 100;
     var geom = new THREE.BoxGeometry(2, height, 2);
 
-    var mat = (cloud.team === 'Blue') ? self.blueMaterial : self.redMaterial;
+    var mat = (cloud.playerTeam === 'Blue') ? self.blueMaterial : self.redMaterial;
 
     if (cloud.plys) {
         self.loadPointCloud(cloud);
