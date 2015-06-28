@@ -1879,7 +1879,7 @@ BlueprintInputPointCloud.prototype = Object.create(VIZI.BlueprintInput.prototype
 BlueprintInputPointCloud.prototype.init = function() {
     var self = this;
 
-    this.clouds = new Firebase('https://splatmap.firebaseio.com/clouds');
+    this.clouds = new Firebase('https://splatmap.firebaseio.com/processedClouds');
     this.clouds.on('child_added', function(snapshot) {
         var cloud = snapshot.val();
         if (VIZI.DEBUG) console.log("cloud received", cloud);
