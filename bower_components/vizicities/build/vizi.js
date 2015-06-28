@@ -7908,7 +7908,17 @@ if (typeof window === undefined) {
     VIZI.BlueprintOutput.call(self, options);
 
     _.defaults(self.options, {
-      workerURL: "vizi-worker.min.js"
+      materialType: "MeshLambertMaterial",
+      materialOptions: {},
+      workerURL: "vizi-worker.min.js",
+      name: "Building tiles"
+    });
+
+    _.defaults(self.options.materialOptions, {
+      color: 0xeeeeee,
+      ambient: 0xffffff,
+      emissive: 0xcccccc,
+      shading: THREE.FlatShading
     });
 
     // Triggers and actions reference
@@ -8027,10 +8037,11 @@ if (typeof window === undefined) {
     var gridHash = self.grids[tile.z];
 
     var loader = new THREE.JSONLoader();
-    var material = new THREE.MeshLambertMaterial({
-      color: 0xeeeeee,
+    var material = new THREE.MeshBasicMaterial({
+      color: 0x00ee0e,
       ambient: 0xffffff,
       emissive: 0xcccccc,
+      wireframe: true,
       shading: THREE.FlatShading
     });
 
