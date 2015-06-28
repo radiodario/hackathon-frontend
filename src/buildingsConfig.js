@@ -13,6 +13,10 @@ module.exports = {
         tilesPerDirection: 3,
         cullZoom: 1
       }],
+      materialType: "MeshBasicMaterial",
+      materialOptions: {
+        wireframe: true,
+      },
       workerURL: "/bower_components/vizicities/build/vizi-worker.min.js"
     }
   },
