@@ -2659,10 +2659,10 @@ var controls = new VIZI.ControlsMap(world.camera, {
 var mapConfig = require('./mapConfig');
 var switchboardMap = new VIZI.BlueprintSwitchboard(mapConfig);
 switchboardMap.addToWorld(world);
-/*
+
 var buildingConfig = require('./buildingsConfig');
 var switchboardBuildings = new VIZI.BlueprintSwitchboard(buildingConfig);
-switchboardBuildings.addToWorld(world);*/
+switchboardBuildings.addToWorld(world);
 
 var pointCloudConfig = require('./pointCloudConfig');
 var switchboardPointClouds = new VIZI.BlueprintSwitchboard(pointCloudConfig);
@@ -2685,7 +2685,7 @@ var update = function() {
 
 update();
 
-},{"./BlueprintInputPlayer":3,"./BlueprintInputPointCloud":4,"./BlueprintOutputPlayer":5,"./BlueprintOutputPointCloud":6,"./mapConfig":10,"./playerConfig":11,"./pointCloudConfig":12}],9:[function(require,module,exports){
+},{"./BlueprintInputPlayer":3,"./BlueprintInputPointCloud":4,"./BlueprintOutputPlayer":5,"./BlueprintOutputPointCloud":6,"./buildingsConfig":9,"./mapConfig":10,"./playerConfig":11,"./pointCloudConfig":12}],9:[function(require,module,exports){
 module.exports = {
   input: {
     type: "BlueprintInputGeoJSON",
@@ -2701,6 +2701,10 @@ module.exports = {
         tilesPerDirection: 3,
         cullZoom: 1
       }],
+      materialType: "MeshBasicMaterial",
+      materialOptions: {
+        wireframe: true,
+      },
       workerURL: "/bower_components/vizicities/build/vizi-worker.min.js"
     }
   },
