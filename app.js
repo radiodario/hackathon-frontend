@@ -1819,6 +1819,45 @@ var Firebase = require('firebase');
 var _ = require('underscore');
 
 
+var BlueprintInputPlayer = function(options) {
+    var self = this;
+    VIZI.BlueprintInput.call(self, options);
+    _.defaults(self.options, {});
+
+
+    self.triggers = [
+        {name : "initialised", arguments: []},
+        {name : "playerUpdated", arguments: ["player"] }
+    ];
+
+    self.actions = [];
+
+}
+
+BlueprintInputPlayer.prototype = Object.create(VIZI.BlueprintInput.prototype);
+
+// sets up firebase and subscribes to events
+BlueprintInputPlayer.prototype.init = function() {
+    var self = this;
+
+    this.player = new Firebase('https://splatmap.firebaseio.com/player');
+    this.player.on('value', function(snapshot) {
+        var player = snapshot.val();
+        if (VIZI.DEBUG) console.log("player received", player);
+        self.emit("playerUpdated", player);
+    });
+
+    self.emit("initialised");
+
+};
+
+module.exports = BlueprintInputPlayer;
+
+},{"firebase":1,"underscore":2}],4:[function(require,module,exports){
+var Firebase = require('firebase');
+var _ = require('underscore');
+
+
 var BlueprintInputPointCloud = function(options) {
     var self = this;
     VIZI.BlueprintInput.call(self, options);
@@ -1830,9 +1869,7 @@ var BlueprintInputPointCloud = function(options) {
         {name : "cloudReceived", arguments: ["cloud"] }
     ];
 
-    self.actions = [
-
-    ]
+    self.actions = [];
 
 }
 
@@ -1855,8 +1892,109 @@ BlueprintInputPointCloud.prototype.init = function() {
 
 module.exports = BlueprintInputPointCloud;
 
-},{"firebase":1,"underscore":2}],4:[function(require,module,exports){
+},{"firebase":1,"underscore":2}],5:[function(require,module,exports){
 var _ = require('underscore');
+require('./PLYLoader');
+
+var BlueprintOutputPlayer = function(options) {
+    var self = this;
+    VIZI.BlueprintOutput.call(self, options);
+
+    _.defaults(self.options, {
+        name: "Player"
+    });
+
+    self.triggers = [
+        {name: "initialised", arguments: []}
+    ];
+
+    self.actions = [
+        {name: "updatePlayer", arguments: ["player"]}
+    ];
+
+    self.name = self.options.name;
+
+    self.world;
+
+    self.players = {};
+};
+
+BlueprintOutputPlayer.prototype = Object.create(VIZI.BlueprintOutput.prototype);
+
+BlueprintOutputPlayer.prototype.init = function() {
+    var self = this;
+
+    self.playerMaterial = new THREE.MeshBasicMaterial({
+        color: 0x2218ff
+    });
+
+}
+
+function toRad(d) {
+    return d* Math.PI / 180;
+}
+
+BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
+    var self = this;
+
+    var pt = new VIZI.LatLon(player.coordinates[0],player.coordinates[1]);
+    var geoCoord = self.world.project(pt);
+
+    var geom = new THREE.BoxGeometry(2, 2, 10);
+    var mesh = new THREE.Mesh(geom, self.playerMaterial);
+
+    mesh.position.y = 10;
+    mesh.position.x = geoCoord.x;
+    mesh.position.z = geoCoord.y;
+
+    mesh.rotation.x = toRad(player.orientation[1]);
+    mesh.rotation.y = toRad(player.orientation[2]);
+    mesh.rotation.z = toRad(player.orientation[0]);
+
+    mesh.matrixAutoUpdate && mesh.updateMatrix();
+
+    self.add(mesh);
+
+    self.players[player.id] = mesh;
+
+}
+
+
+BlueprintOutputPlayer.prototype.updatePlayer = function(player) {
+    var self = this;
+    
+    if (!self.players[player.id]) {
+        return self.spawnPlayer(player);
+    }
+
+    var pt = new VIZI.LatLon(player.coordinates[0],player.coordinates[1]);
+    var geoCoord = self.world.project(pt);
+
+    var mesh = self.players[player.id];
+
+    mesh.position.x = geoCoord.x;
+    mesh.position.z = geoCoord.y;
+
+
+    mesh.rotation.x = toRad(player.orientation[1]);
+    mesh.rotation.y = toRad(player.orientation[2]);
+    mesh.rotation.z = toRad(player.orientation[0]);
+
+
+}
+
+
+BlueprintOutputPlayer.prototype.onAdd = function(world) {
+  var self = this;
+  self.world = world;
+  self.init();
+};
+
+module.exports = BlueprintOutputPlayer;
+
+},{"./PLYLoader":7,"underscore":2}],6:[function(require,module,exports){
+var _ = require('underscore');
+require('./PLYLoader');
 
 var BlueprintOutputPointCloud = function(options) {
     var self = this;
@@ -1871,7 +2009,7 @@ var BlueprintOutputPointCloud = function(options) {
     ];
 
     self.actions = [
-        {name: "outputCloud", arguments: ["tweet"]}
+        {name: "outputCloud", arguments: ["player"]}
     ];
 
     self.name = self.options.name;
@@ -1886,22 +2024,64 @@ BlueprintOutputPointCloud.prototype = Object.create(VIZI.BlueprintOutput.prototy
 BlueprintOutputPointCloud.prototype.init = function() {
     var self = this;
 
-
-
-    self.material = new THREE.PointCloudMaterial({
+    self.cloudMaterial = new THREE.PointCloudMaterial({
         color: 0xe61885,
-        size: 2.0
+        size: 1.0
     });
 
 
+    self.boxMaterial = new THREE.MeshBasicMaterial({
+        color: 0xe61885
+    });
 
 }
+
+BlueprintOutputPointCloud.prototype.loadPointCloud = function(cloud) {
+    var self = this;
+    var loader = new THREE.PLYLoader();
+    loader.addEventListener( 'load', function ( event ) {
+        var pointCloudGeometry = event.content;
+        var mesh = new THREE.PointCloud(pointCloudGeometry, self.cloudMaterial);
+        mesh.position.x = cloud.geoCoord.x;
+        mesh.position.z = cloud.geoCoord.y;
+        mesh.position.y = 0;
+        mesh.rotation.x = Math.PI;
+        mesh.rotation.y = -Math.PI/2;
+        mesh.scale.set(10, 10, 10);
+        self.add(mesh);
+    });
+    loader.load( cloud.plys[0] );
+}
+
+
 
 BlueprintOutputPointCloud.prototype.outputCloud = function(cloud) {
     var self = this;
 
     var coords = cloud.coordinates;
 
+    var points = cloud.points;
+
+    var offset = new VIZI.Point();
+
+    var geoCoord = self.world.project(new VIZI.LatLon(coords[0],coords[1]));
+    cloud.geoCoord = geoCoord;
+    var height = 100;
+    var geom = new THREE.BoxGeometry(2, height, 2);
+
+    var mesh = new THREE.Mesh(geom, self.boxMaterial);
+
+    mesh.position.y = height/2;
+    mesh.position.x = geoCoord.x;
+    mesh.position.z = geoCoord.y;
+
+    mesh.matrixAutoUpdate && mesh.updateMatrix();
+
+    self.add(mesh);
+
+    if (cloud.processed) {
+        self.loadPointCloud(cloud);
+    }
 
 }
 
@@ -1914,9 +2094,496 @@ BlueprintOutputPointCloud.prototype.onAdd = function(world) {
 
 module.exports = BlueprintOutputPointCloud;
 
-},{"underscore":2}],5:[function(require,module,exports){
+},{"./PLYLoader":7,"underscore":2}],7:[function(require,module,exports){
+/**
+ * @author Wei Meng / http://about.me/menway
+ *
+ * Description: A THREE loader for PLY ASCII files (known as the Polygon File Format or the Stanford Triangle Format).
+ *
+ *
+ * Limitations: ASCII decoding assumes file is UTF-8.
+ *
+ * Usage:
+ *	var loader = new THREE.PLYLoader();
+ *	loader.load('./models/ply/ascii/dolphins.ply', function (geometry) {
+ *
+ *		scene.add( new THREE.Mesh( geometry ) );
+ *
+ *	} );
+ *
+ * If the PLY file uses non standard property names, they can be mapped while
+ * loading. For example, the following maps the properties
+ * “diffuse_(red|green|blue)” in the file to standard color names.
+ *
+ * loader.setPropertyNameMapping( {
+ *	diffuse_red: 'red',
+ *	diffuse_green: 'green',
+ *	diffuse_blue: 'blue'
+ * } );
+ *
+ */
+
+
+THREE.PLYLoader = function () {
+
+	this.propertyNameMapping = {};
+
+};
+
+THREE.PLYLoader.prototype = {
+
+	constructor: THREE.PLYLoader,
+
+	setPropertyNameMapping: function ( mapping ) {
+
+		this.propertyNameMapping = mapping;
+
+	},
+
+	load: function ( url, callback ) {
+
+		var scope = this;
+		var request = new XMLHttpRequest();
+
+		request.addEventListener( 'load', function ( event ) {
+
+			var geometry = scope.parse( event.target.response );
+
+			scope.dispatchEvent( { type: 'load', content: geometry } );
+
+			if ( callback ) callback( geometry );
+
+		}, false );
+
+		request.addEventListener( 'progress', function ( event ) {
+
+			scope.dispatchEvent( { type: 'progress', loaded: event.loaded, total: event.total } );
+
+		}, false );
+
+		request.addEventListener( 'error', function () {
+
+			scope.dispatchEvent( { type: 'error', message: 'Couldn\'t load URL [' + url + ']' } );
+
+		}, false );
+
+		request.open( 'GET', url, true );
+		request.responseType = "arraybuffer";
+		request.send( null );
+
+	},
+
+	bin2str: function (buf) {
+
+		var array_buffer = new Uint8Array(buf);
+		var str = '';
+		for (var i = 0; i < buf.byteLength; i ++) {
+			str += String.fromCharCode(array_buffer[i]); // implicitly assumes little-endian
+		}
+
+		return str;
+
+	},
+
+	isASCII: function( data ) {
+
+		var header = this.parseHeader( this.bin2str( data ) );
+
+		return header.format === "ascii";
+
+	},
+
+	parse: function ( data ) {
+
+		if ( data instanceof ArrayBuffer ) {
+
+			return this.isASCII( data )
+				? this.parseASCII( this.bin2str( data ) )
+				: this.parseBinary( data );
+
+		} else {
+
+			return this.parseASCII( data );
+
+		}
+
+	},
+
+	parseHeader: function ( data ) {
+
+		var patternHeader = /ply([\s\S]*)end_header\s/;
+		var headerText = "";
+		var headerLength = 0;
+		var result = patternHeader.exec( data );
+		if ( result !== null ) {
+			headerText = result [ 1 ];
+			headerLength = result[ 0 ].length;
+		}
+
+		var header = {
+			comments: [],
+			elements: [],
+			headerLength: headerLength
+		};
+
+		var lines = headerText.split( '\n' );
+		var currentElement = undefined;
+		var lineType, lineValues;
+
+		function make_ply_element_property( propertValues, propertyNameMapping ) {
+
+			var property = {
+				type: propertValues[ 0 ]
+			};
+
+			if ( property.type === 'list' ) {
+
+				property.name = propertValues[ 3 ];
+				property.countType = propertValues[ 1 ];
+				property.itemType = propertValues[ 2 ];
+
+			} else {
+
+				property.name = propertValues[ 1 ];
+
+			}
+
+			if ( property.name in propertyNameMapping ) {
+
+				property.name = propertyNameMapping[ property.name ];
+
+			}
+
+			return property;
+
+		}
+
+		for ( var i = 0; i < lines.length; i ++ ) {
+
+			var line = lines[ i ];
+			line = line.trim()
+			if ( line === "" ) { continue; }
+			lineValues = line.split( /\s+/ );
+			lineType = lineValues.shift()
+			line = lineValues.join(" ")
+
+			switch ( lineType ) {
+
+			case "format":
+
+				header.format = lineValues[0];
+				header.version = lineValues[1];
+
+				break;
+
+			case "comment":
+
+				header.comments.push(line);
+
+				break;
+
+			case "element":
+
+				if ( !(currentElement === undefined) ) {
+
+					header.elements.push(currentElement);
+
+				}
+
+				currentElement = Object();
+				currentElement.name = lineValues[0];
+				currentElement.count = parseInt( lineValues[1] );
+				currentElement.properties = [];
+
+				break;
+
+			case "property":
+
+				currentElement.properties.push( make_ply_element_property( lineValues, this.propertyNameMapping ) );
+
+				break;
+
+
+			default:
+
+				console.log("unhandled", lineType, lineValues);
+
+			}
+
+		}
+
+		if ( !(currentElement === undefined) ) {
+
+			header.elements.push(currentElement);
+
+		}
+
+		return header;
+
+	},
+
+	parseASCIINumber: function ( n, type ) {
+
+		switch ( type ) {
+
+		case 'char': case 'uchar': case 'short': case 'ushort': case 'int': case 'uint':
+		case 'int8': case 'uint8': case 'int16': case 'uint16': case 'int32': case 'uint32':
+
+			return parseInt( n );
+
+		case 'float': case 'double': case 'float32': case 'float64':
+
+			return parseFloat( n );
+
+		}
+
+	},
+
+	parseASCIIElement: function ( properties, line ) {
+
+		var values = line.split( /\s+/ );
+
+		var element = Object();
+
+		for ( var i = 0; i < properties.length; i ++ ) {
+
+			if ( properties[i].type === "list" ) {
+
+				var list = [];
+				var n = this.parseASCIINumber( values.shift(), properties[i].countType );
+
+				for ( var j = 0; j < n; j ++ ) {
+
+					list.push( this.parseASCIINumber( values.shift(), properties[i].itemType ) );
+
+				}
+
+				element[ properties[i].name ] = list;
+
+			} else {
+
+				element[ properties[i].name ] = this.parseASCIINumber( values.shift(), properties[i].type );
+
+			}
+
+		}
+
+		return element;
+
+	},
+
+	parseASCII: function ( data ) {
+
+		// PLY ascii format specification, as per http://en.wikipedia.org/wiki/PLY_(file_format)
+
+		var geometry = new THREE.Geometry();
+
+		var result;
+
+		var header = this.parseHeader( data );
+
+		var patternBody = /end_header\s([\s\S]*)$/;
+		var body = "";
+		if ( ( result = patternBody.exec( data ) ) !== null ) {
+			body = result [ 1 ];
+		}
+
+		var lines = body.split( '\n' );
+		var currentElement = 0;
+		var currentElementCount = 0;
+		geometry.useColor = false;
+
+		for ( var i = 0; i < lines.length; i ++ ) {
+
+			var line = lines[ i ];
+			line = line.trim()
+			if ( line === "" ) { continue; }
+
+			if ( currentElementCount >= header.elements[currentElement].count ) {
+
+				currentElement ++;
+				currentElementCount = 0;
+
+			}
+
+			var element = this.parseASCIIElement( header.elements[currentElement].properties, line );
+
+			this.handleElement( geometry, header.elements[currentElement].name, element );
+
+			currentElementCount ++;
+
+		}
+
+		return this.postProcess( geometry );
+
+	},
+
+	postProcess: function ( geometry ) {
+
+		if ( geometry.useColor ) {
+
+			for ( var i = 0; i < geometry.faces.length; i ++ ) {
+
+				geometry.faces[i].vertexColors = [
+					geometry.colors[geometry.faces[i].a],
+					geometry.colors[geometry.faces[i].b],
+					geometry.colors[geometry.faces[i].c]
+				];
+
+			}
+
+			geometry.elementsNeedUpdate = true;
+
+		}
+
+		geometry.computeBoundingSphere();
+
+		return geometry;
+
+	},
+
+	handleElement: function ( geometry, elementName, element ) {
+
+		if ( elementName === "vertex" ) {
+
+			geometry.vertices.push(
+				new THREE.Vector3( element.x, element.y, element.z )
+			);
+
+			if ( 'red' in element && 'green' in element && 'blue' in element ) {
+
+				geometry.useColor = true;
+
+				var color = new THREE.Color();
+				color.setRGB( element.red / 255.0, element.green / 255.0, element.blue / 255.0 );
+				geometry.colors.push( color );
+
+			}
+
+		} else if ( elementName === "face" ) {
+
+			var vertex_indices = element.vertex_indices;
+
+			if ( vertex_indices.length === 3 ) {
+
+				geometry.faces.push(
+					new THREE.Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 2 ] )
+				);
+
+			} else if ( vertex_indices.length === 4 ) {
+
+				geometry.faces.push(
+					new THREE.Face3( vertex_indices[ 0 ], vertex_indices[ 1 ], vertex_indices[ 3 ] ),
+					new THREE.Face3( vertex_indices[ 1 ], vertex_indices[ 2 ], vertex_indices[ 3 ] )
+				);
+
+			}
+
+		}
+
+	},
+
+	binaryRead: function ( dataview, at, type, little_endian ) {
+
+		switch ( type ) {
+
+			// corespondences for non-specific length types here match rply:
+		case 'int8':		case 'char':	 return [ dataview.getInt8( at ), 1 ];
+
+		case 'uint8':		case 'uchar':	 return [ dataview.getUint8( at ), 1 ];
+
+		case 'int16':		case 'short':	 return [ dataview.getInt16( at, little_endian ), 2 ];
+
+		case 'uint16':	case 'ushort': return [ dataview.getUint16( at, little_endian ), 2 ];
+
+		case 'int32':		case 'int':		 return [ dataview.getInt32( at, little_endian ), 4 ];
+
+		case 'uint32':	case 'uint':	 return [ dataview.getUint32( at, little_endian ), 4 ];
+
+		case 'float32': case 'float':	 return [ dataview.getFloat32( at, little_endian ), 4 ];
+
+		case 'float64': case 'double': return [ dataview.getFloat64( at, little_endian ), 8 ];
+
+		}
+
+	},
+
+	binaryReadElement: function ( dataview, at, properties, little_endian ) {
+
+		var element = Object();
+		var result, read = 0;
+
+		for ( var i = 0; i < properties.length; i ++ ) {
+
+			if ( properties[i].type === "list" ) {
+
+				var list = [];
+
+				result = this.binaryRead( dataview, at + read, properties[i].countType, little_endian );
+				var n = result[0];
+				read += result[1];
+
+				for ( var j = 0; j < n; j ++ ) {
+
+					result = this.binaryRead( dataview, at + read, properties[i].itemType, little_endian );
+					list.push( result[0] );
+					read += result[1];
+
+				}
+
+				element[ properties[i].name ] = list;
+
+			} else {
+
+				result = this.binaryRead( dataview, at + read, properties[i].type, little_endian );
+				element[ properties[i].name ] = result[0];
+				read += result[1];
+
+			}
+
+		}
+
+		return [ element, read ];
+
+	},
+
+	parseBinary: function ( data ) {
+
+		var geometry = new THREE.Geometry();
+
+		var header = this.parseHeader( this.bin2str( data ) );
+		var little_endian = (header.format === "binary_little_endian");
+		var body = new DataView( data, header.headerLength );
+		var result, loc = 0;
+
+		for ( var currentElement = 0; currentElement < header.elements.length; currentElement ++ ) {
+
+			for ( var currentElementCount = 0; currentElementCount < header.elements[currentElement].count; currentElementCount ++ ) {
+
+				result = this.binaryReadElement( body, loc, header.elements[currentElement].properties, little_endian );
+				loc += result[1];
+				var element = result[0];
+
+				this.handleElement( geometry, header.elements[currentElement].name, element );
+
+			}
+
+		}
+
+		return this.postProcess( geometry );
+
+	}
+
+};
+
+THREE.EventDispatcher.prototype.apply( THREE.PLYLoader.prototype );
+
+},{}],8:[function(require,module,exports){
 VIZI.BlueprintInputPointCloud = require('./BlueprintInputPointCloud');
 VIZI.BlueprintOutputPointCloud = require('./BlueprintOutputPointCloud');
+VIZI.BlueprintInputPlayer = require('./BlueprintInputPlayer');
+VIZI.BlueprintOutputPlayer = require('./BlueprintOutputPlayer');
+
 
 var CENTER = [51.5219363, -0.0846016];
 
@@ -1945,6 +2612,10 @@ var pointCloudConfig = require('./pointCloudConfig');
 var switchboardPointClouds = new VIZI.BlueprintSwitchboard(pointCloudConfig);
 switchboardPointClouds.addToWorld(world);
 
+var playerConfig = require('./playerConfig');
+var switchboardPlayer = new VIZI.BlueprintSwitchboard(playerConfig);
+switchboardPlayer.addToWorld(world);
+
 var clock = new VIZI.Clock();
 
 var update = function() {
@@ -1953,14 +2624,12 @@ var update = function() {
   world.onTick(delta);
   world.render();
 
-
-
   window.requestAnimationFrame(update);
 };
 
 update();
 
-},{"./BlueprintInputPointCloud":3,"./BlueprintOutputPointCloud":4,"./buildingsConfig":6,"./mapConfig":7,"./pointCloudConfig":8}],6:[function(require,module,exports){
+},{"./BlueprintInputPlayer":3,"./BlueprintInputPointCloud":4,"./BlueprintOutputPlayer":5,"./BlueprintOutputPointCloud":6,"./buildingsConfig":9,"./mapConfig":10,"./playerConfig":11,"./pointCloudConfig":12}],9:[function(require,module,exports){
 module.exports = {
   input: {
     type: "BlueprintInputGeoJSON",
@@ -1972,9 +2641,9 @@ module.exports = {
     type: "BlueprintOutputBuildingTiles",
     options: {
       grids: [{
-        zoom: 19,
-        tilesPerDirection: 1,
-        cullZoom: 10
+        zoom: 18,
+        tilesPerDirection: 3,
+        cullZoom: 1
       }],
       workerURL: "/bower_components/vizicities/build/vizi-worker.min.js"
     }
@@ -2022,7 +2691,7 @@ module.exports = {
   }]
 };
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = {
   input: {
     type: "BlueprintInputMapTiles",
@@ -2035,36 +2704,8 @@ module.exports = {
     options: {
       grids: [{
         zoom: 20,
-        tilesPerDirection: 3,
-        cullZoom: 18
-      }, {
-        zoom: 19,
-        tilesPerDirection: 3,
-        cullZoom: 17
-      }, {
-        zoom: 18,
-        tilesPerDirection: 3,
-        cullZoom: 16
-      }, {
-        zoom: 17,
-        tilesPerDirection: 3,
-        cullZoom: 15
-      }, {
-        zoom: 16,
-        tilesPerDirection: 3,
-        cullZoom: 14
-      }, {
-        zoom: 15,
-        tilesPerDirection: 3,
-        cullZoom: 13
-      }, {
-        zoom: 14,
-        tilesPerDirection: 3,
-        cullZoom: 12
-      }, {
-        zoom: 13,
         tilesPerDirection: 5,
-        cullZoom: 11
+        cullZoom: 10
       }]
     }
   },
@@ -2102,7 +2743,44 @@ module.exports = {
   }]
 };
 
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+module.exports = {
+input: {
+  type: "BlueprintInputPlayer",
+  options: {
+  }
+},
+output: {
+  type: "BlueprintOutputPlayer",
+  options: {
+    infoUI: true,
+  }
+},
+triggers: [
+  {
+    triggerObject: "output",
+    triggerName: "initialised",
+    triggerArguments: [],
+    actionObject: "input",
+    actionName: "",
+    actionArguments: [],
+    actionOutput: {}
+  },
+  {
+    triggerObject: "input",
+    triggerName: "playerUpdated",
+    triggerArguments: ['player'],
+    actionObject: "output",
+    actionName: "updatePlayer",
+    actionArguments: ['player'],
+    actionOutput: {
+      player: "player"
+    }
+  }
+]
+}
+
+},{}],12:[function(require,module,exports){
 module.exports = {
 input: {
   type: "BlueprintInputPointCloud",
@@ -2139,4 +2817,4 @@ triggers: [
 ]
 }
 
-},{}]},{},[3,4,5,6,7,8])
+},{}]},{},[3,4,5,6,7,8,9,10,11,12])
