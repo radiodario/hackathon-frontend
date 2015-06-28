@@ -1840,12 +1840,15 @@ BlueprintInputPlayer.prototype = Object.create(VIZI.BlueprintInput.prototype);
 BlueprintInputPlayer.prototype.init = function() {
     var self = this;
 
-    this.player = new Firebase('https://splatmap.firebaseio.com/player');
-    this.player.on('value', function(snapshot) {
-        var player = snapshot.val();
+    this.players = new Firebase('https://splatmap.firebaseio.com/players');
+    this.players.on('value', function(snapshot) {
+        var players = snapshot.val();
+        Object.keys(players).map(function(k) {
+            self.emit("playerUpdated", players[k]);
+        });
         if (VIZI.DEBUG) console.log("player received", player);
-        self.emit("playerUpdated", player);
     });
+
 
     self.emit("initialised");
 
@@ -1924,10 +1927,19 @@ BlueprintOutputPlayer.prototype = Object.create(VIZI.BlueprintOutput.prototype);
 BlueprintOutputPlayer.prototype.init = function() {
     var self = this;
 
-    self.playerMaterial = new THREE.MeshBasicMaterial({
-        color: 0x2218ff
-    });
+    self.materials = {
+        "Blue Team" : new THREE.MeshLambertMaterial({
+            color: 0x8500e6
+        }),
+        "Red Team" : new THREE.MeshLambertMaterial({
+            color: 0xe60085
+        })
+    };
 
+    self.whateverMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+        wireframe: true
+    });
 }
 
 function toRad(d) {
@@ -1940,8 +1952,10 @@ BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
     var pt = new VIZI.LatLon(player.coordinates[0],player.coordinates[1]);
     var geoCoord = self.world.project(pt);
 
+    var mat = self.materials[player.team] || self.whateverMaterial;
+
     var geom = new THREE.BoxGeometry(2, 2, 10);
-    var mesh = new THREE.Mesh(geom, self.playerMaterial);
+    var mesh = new THREE.Mesh(geom, mat);
 
     mesh.position.y = 10;
     mesh.position.x = geoCoord.x;
@@ -1959,12 +1973,27 @@ BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
 
 }
 
+BlueprintOutputPlayer.prototype.killPlayer = function(player) {
+    var self = this;
+    var mesh = self.players[player.id];
+    self.remove(mesh);
+    delete self.players[player.id];
+}
+
 
 BlueprintOutputPlayer.prototype.updatePlayer = function(player) {
     var self = this;
-    
+
+    if (!player.coordinates) {
+        return;
+    }
+
     if (!self.players[player.id]) {
         return self.spawnPlayer(player);
+    }
+
+    if (player.state !== "in game") {
+        return self.killPlayer(player);
     }
 
     var pt = new VIZI.LatLon(player.coordinates[0],player.coordinates[1]);
@@ -2030,18 +2059,29 @@ BlueprintOutputPointCloud.prototype.init = function() {
     });
 
 
-    self.boxMaterial = new THREE.MeshBasicMaterial({
+    self.redMaterial = new THREE.MeshBasicMaterial({
         color: 0xe61885
     });
+
+    self.blueMaterial = new THREE.MeshBasicMaterial({
+        color: 0x8518e6
+    });
+
+    self.failMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+        wireframe: true
+        })
 
 }
 
 BlueprintOutputPointCloud.prototype.loadPointCloud = function(cloud) {
     var self = this;
     var loader = new THREE.PLYLoader();
+    var mat = (cloud.team === 'Blue') ? self.blueMaterial : self.redMaterial;
+
     loader.addEventListener( 'load', function ( event ) {
         var pointCloudGeometry = event.content;
-        var mesh = new THREE.PointCloud(pointCloudGeometry, self.cloudMaterial);
+        var mesh = new THREE.PointCloud(pointCloudGeometry, mat);
         mesh.position.x = cloud.geoCoord.x;
         mesh.position.z = cloud.geoCoord.y;
         mesh.position.y = 0;
@@ -2069,19 +2109,28 @@ BlueprintOutputPointCloud.prototype.outputCloud = function(cloud) {
     var height = 100;
     var geom = new THREE.BoxGeometry(2, height, 2);
 
-    var mesh = new THREE.Mesh(geom, self.boxMaterial);
+    var mat = (cloud.team === 'Blue') ? self.blueMaterial : self.redMaterial;
+
+    if (cloud.plys) {
+        self.loadPointCloud(cloud);
+        mat = self.failMaterial;
+    }
+
+
+    var mesh = new THREE.Mesh(geom, mat);
 
     mesh.position.y = height/2;
     mesh.position.x = geoCoord.x;
     mesh.position.z = geoCoord.y;
+    mesh.rotation.x = cloud.orientation[1];
+    mesh.rotation.y = cloud.orientation[2];
+    mesh.rotation.z = cloud.orientation[0];
 
     mesh.matrixAutoUpdate && mesh.updateMatrix();
 
     self.add(mesh);
 
-    if (cloud.processed) {
-        self.loadPointCloud(cloud);
-    }
+
 
 }
 
@@ -2583,7 +2632,6 @@ VIZI.BlueprintInputPointCloud = require('./BlueprintInputPointCloud');
 VIZI.BlueprintOutputPointCloud = require('./BlueprintOutputPointCloud');
 VIZI.BlueprintInputPlayer = require('./BlueprintInputPlayer');
 VIZI.BlueprintOutputPlayer = require('./BlueprintOutputPlayer');
-
 
 var CENTER = [51.5219363, -0.0846016];
 
