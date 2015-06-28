@@ -17,7 +17,7 @@ module.exports = function(grunt) {
 
     copy: {
       all: {
-        src: ['*.css', '*.html', 'images/**/*', 'img/**/*', '!Gruntfile.js', 'bower_components/**/*.{js,css}'],
+        src: ['*.css', '*.html', 'images/**/*', 'img/**/*', '!Gruntfile.js', 'CNAME', 'bower_components/**/*.{js,css}'],
         dest: 'dist/',
       },
     },
