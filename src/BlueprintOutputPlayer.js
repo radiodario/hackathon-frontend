@@ -30,17 +30,16 @@ BlueprintOutputPlayer.prototype.init = function() {
     var self = this;
 
     self.materials = {
-        "Blue Team" : new THREE.MeshLambertMaterial({
+        "Blue" : new THREE.MeshBasicMaterial({
             color: 0x8500e6
         }),
-        "Red Team" : new THREE.MeshLambertMaterial({
+        "Red" : new THREE.MeshBasicMaterial({
             color: 0xe60085
         })
     };
 
     self.whateverMaterial = new THREE.MeshBasicMaterial({
         color: 0x333333,
-        wireframe: true
     });
 }
 
@@ -54,20 +53,14 @@ BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
     var pt = new VIZI.LatLon(player.coordinates[0],player.coordinates[1]);
     var geoCoord = self.world.project(pt);
 
-    var mat = self.materials[player.team] || self.whateverMaterial;
+    var mat = self.materials[player.team_name] || self.whateverMaterial;
 
-    var geom = new THREE.BoxGeometry(2, 2, 10);
+    var geom = new THREE.BoxGeometry(5, 10, 5);
     var mesh = new THREE.Mesh(geom, mat);
 
     mesh.position.y = 10;
     mesh.position.x = geoCoord.x;
     mesh.position.z = geoCoord.y;
-
-    if (player.orientation) {
-        mesh.rotation.x = toRad(player.orientation[1]);
-        mesh.rotation.y = toRad(player.orientation[2]);
-        mesh.rotation.z = toRad(player.orientation[0]);
-    }
 
     mesh.matrixAutoUpdate && mesh.updateMatrix();
 
@@ -107,6 +100,8 @@ BlueprintOutputPlayer.prototype.updatePlayer = function(player) {
 
     mesh.position.x = geoCoord.x;
     mesh.position.z = geoCoord.y;
+
+    console.log(player, "updated", mesh.position);
 
     if (player.orientation) {
         mesh.rotation.x = toRad(player.orientation[1]);

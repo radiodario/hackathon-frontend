@@ -9,6 +9,7 @@ var worldOptions = {
     viewport: document.querySelector("#map-viewport"),
     center: new VIZI.LatLon(CENTER[0], CENTER[1]),
     zoom: 19,
+    layersUI: true,
     antialias: false
 };
 
@@ -21,10 +22,10 @@ var controls = new VIZI.ControlsMap(world.camera, {
 var mapConfig = require('./mapConfig');
 var switchboardMap = new VIZI.BlueprintSwitchboard(mapConfig);
 switchboardMap.addToWorld(world);
-
+/*
 var buildingConfig = require('./buildingsConfig');
 var switchboardBuildings = new VIZI.BlueprintSwitchboard(buildingConfig);
-switchboardBuildings.addToWorld(world);
+switchboardBuildings.addToWorld(world);*/
 
 var pointCloudConfig = require('./pointCloudConfig');
 var switchboardPointClouds = new VIZI.BlueprintSwitchboard(pointCloudConfig);
