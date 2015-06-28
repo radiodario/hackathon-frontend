@@ -2004,10 +2004,11 @@ BlueprintOutputPlayer.prototype.updatePlayer = function(player) {
     mesh.position.x = geoCoord.x;
     mesh.position.z = geoCoord.y;
 
-
-    mesh.rotation.x = toRad(player.orientation[1]);
-    mesh.rotation.y = toRad(player.orientation[2]);
-    mesh.rotation.z = toRad(player.orientation[0]);
+    if (player.orientation) {
+        mesh.rotation.x = toRad(player.orientation[1]);
+        mesh.rotation.y = toRad(player.orientation[2]);
+        mesh.rotation.z = toRad(player.orientation[0]);
+    }
 
 
 }
