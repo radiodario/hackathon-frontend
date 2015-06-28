@@ -2131,9 +2131,12 @@ BlueprintOutputPointCloud.prototype.outputCloud = function(cloud) {
     mesh.position.y = height/2;
     mesh.position.x = geoCoord.x;
     mesh.position.z = geoCoord.y;
-    mesh.rotation.x = cloud.orientation[1];
-    mesh.rotation.y = cloud.orientation[2];
-    mesh.rotation.z = cloud.orientation[0];
+    if (cloud.orientation) {
+        mesh.rotation.x = cloud.orientation[1];
+        mesh.rotation.y = cloud.orientation[2];
+        mesh.rotation.z = cloud.orientation[0];
+
+    }
 
     mesh.matrixAutoUpdate && mesh.updateMatrix();
 
