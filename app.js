@@ -1965,7 +1965,6 @@ BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
         mesh.rotation.x = toRad(player.orientation[1]);
         mesh.rotation.y = toRad(player.orientation[2]);
         mesh.rotation.z = toRad(player.orientation[0]);
-
     }
 
     mesh.matrixAutoUpdate && mesh.updateMatrix();
@@ -2057,10 +2056,16 @@ BlueprintOutputPointCloud.prototype = Object.create(VIZI.BlueprintOutput.prototy
 BlueprintOutputPointCloud.prototype.init = function() {
     var self = this;
 
-    self.cloudMaterial = new THREE.PointCloudMaterial({
+    self.redCloudMaterial = new THREE.PointCloudMaterial({
         color: 0xe61885,
         size: 1.0
     });
+
+    self.blueCloudMaterial = new THREE.PointCloudMaterial({
+        color: 0x8518e6,
+        size: 1.0
+    });
+
 
 
     self.redMaterial = new THREE.MeshBasicMaterial({
@@ -2081,7 +2086,7 @@ BlueprintOutputPointCloud.prototype.init = function() {
 BlueprintOutputPointCloud.prototype.loadPointCloud = function(cloud) {
     var self = this;
     var loader = new THREE.PLYLoader();
-    var mat = (cloud.team === 'Blue') ? self.blueMaterial : self.redMaterial;
+    var mat = (cloud.team === 'Blue') ? self.blueCloudMaterial : self.redCloudMaterial;
 
     loader.addEventListener( 'load', function ( event ) {
         var pointCloudGeometry = event.content;
