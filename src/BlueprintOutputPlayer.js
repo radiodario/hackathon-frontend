@@ -67,7 +67,6 @@ BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
         mesh.rotation.x = toRad(player.orientation[1]);
         mesh.rotation.y = toRad(player.orientation[2]);
         mesh.rotation.z = toRad(player.orientation[0]);
-
     }
 
     mesh.matrixAutoUpdate && mesh.updateMatrix();
