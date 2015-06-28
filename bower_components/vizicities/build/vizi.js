@@ -8037,11 +8037,12 @@ if (typeof window === undefined) {
     var gridHash = self.grids[tile.z];
 
     var loader = new THREE.JSONLoader();
-    var material = new THREE.MeshBasicMaterial({
-      color: 0x00ee0e,
+    var material = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
       ambient: 0xffffff,
       emissive: 0xcccccc,
       wireframe: true,
+      wireframeLinewidth: 4,
       shading: THREE.FlatShading
     });
 
