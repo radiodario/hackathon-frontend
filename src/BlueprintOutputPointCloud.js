@@ -35,18 +35,29 @@ BlueprintOutputPointCloud.prototype.init = function() {
     });
 
 
-    self.boxMaterial = new THREE.MeshBasicMaterial({
+    self.redMaterial = new THREE.MeshBasicMaterial({
         color: 0xe61885
     });
+
+    self.blueMaterial = new THREE.MeshBasicMaterial({
+        color: 0x8518e6
+    });
+
+    self.failMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+        wireframe: true
+        })
 
 }
 
 BlueprintOutputPointCloud.prototype.loadPointCloud = function(cloud) {
     var self = this;
     var loader = new THREE.PLYLoader();
+    var mat = (cloud.team === 'Blue') ? self.blueMaterial : self.redMaterial;
+
     loader.addEventListener( 'load', function ( event ) {
         var pointCloudGeometry = event.content;
-        var mesh = new THREE.PointCloud(pointCloudGeometry, self.cloudMaterial);
+        var mesh = new THREE.PointCloud(pointCloudGeometry, mat);
         mesh.position.x = cloud.geoCoord.x;
         mesh.position.z = cloud.geoCoord.y;
         mesh.position.y = 0;
@@ -74,19 +85,28 @@ BlueprintOutputPointCloud.prototype.outputCloud = function(cloud) {
     var height = 100;
     var geom = new THREE.BoxGeometry(2, height, 2);
 
-    var mesh = new THREE.Mesh(geom, self.boxMaterial);
+    var mat = (cloud.team === 'Blue') ? self.blueMaterial : self.redMaterial;
+
+    if (cloud.plys) {
+        self.loadPointCloud(cloud);
+        mat = self.failMaterial;
+    }
+
+
+    var mesh = new THREE.Mesh(geom, mat);
 
     mesh.position.y = height/2;
     mesh.position.x = geoCoord.x;
     mesh.position.z = geoCoord.y;
+    mesh.rotation.x = cloud.orientation[1];
+    mesh.rotation.y = cloud.orientation[2];
+    mesh.rotation.z = cloud.orientation[0];
 
     mesh.matrixAutoUpdate && mesh.updateMatrix();
 
     self.add(mesh);
 
-    if (cloud.processed) {
-        self.loadPointCloud(cloud);
-    }
+
 
 }
 

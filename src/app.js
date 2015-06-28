@@ -3,7 +3,6 @@ VIZI.BlueprintOutputPointCloud = require('./BlueprintOutputPointCloud');
 VIZI.BlueprintInputPlayer = require('./BlueprintInputPlayer');
 VIZI.BlueprintOutputPlayer = require('./BlueprintOutputPlayer');
 
-
 var CENTER = [51.5219363, -0.0846016];
 
 var worldOptions = {

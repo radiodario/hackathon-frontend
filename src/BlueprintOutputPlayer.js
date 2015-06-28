@@ -29,10 +29,19 @@ BlueprintOutputPlayer.prototype = Object.create(VIZI.BlueprintOutput.prototype);
 BlueprintOutputPlayer.prototype.init = function() {
     var self = this;
 
-    self.playerMaterial = new THREE.MeshBasicMaterial({
-        color: 0x2218ff
-    });
+    self.materials = {
+        "Blue Team" : new THREE.MeshLambertMaterial({
+            color: 0x8500e6
+        }),
+        "Red Team" : new THREE.MeshLambertMaterial({
+            color: 0xe60085
+        })
+    };
 
+    self.whateverMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+        wireframe: true
+    });
 }
 
 function toRad(d) {
@@ -45,8 +54,10 @@ BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
     var pt = new VIZI.LatLon(player.coordinates[0],player.coordinates[1]);
     var geoCoord = self.world.project(pt);
 
+    var mat = self.materials[player.team] || self.whateverMaterial;
+
     var geom = new THREE.BoxGeometry(2, 2, 10);
-    var mesh = new THREE.Mesh(geom, self.playerMaterial);
+    var mesh = new THREE.Mesh(geom, mat);
 
     mesh.position.y = 10;
     mesh.position.x = geoCoord.x;
@@ -64,12 +75,27 @@ BlueprintOutputPlayer.prototype.spawnPlayer = function(player) {
 
 }
 
+BlueprintOutputPlayer.prototype.killPlayer = function(player) {
+    var self = this;
+    var mesh = self.players[player.id];
+    self.remove(mesh);
+    delete self.players[player.id];
+}
+
 
 BlueprintOutputPlayer.prototype.updatePlayer = function(player) {
     var self = this;
-    
+
+    if (!player.coordinates) {
+        return;
+    }
+
     if (!self.players[player.id]) {
         return self.spawnPlayer(player);
+    }
+
+    if (player.state !== "in game") {
+        return self.killPlayer(player);
     }
 
     var pt = new VIZI.LatLon(player.coordinates[0],player.coordinates[1]);
