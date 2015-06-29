@@ -31,12 +31,12 @@ BlueprintOutputPointCloud.prototype.init = function() {
 
     self.redCloudMaterial = new THREE.PointCloudMaterial({
         color: 0xe61885,
-        size: 2.0
+        size: 1.0
     });
 
     self.blueCloudMaterial = new THREE.PointCloudMaterial({
         color: 0x8518e6,
-        size: 2.0
+        size: 1.0
     });
 
 
